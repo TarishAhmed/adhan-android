@@ -1,0 +1,15 @@
+.gradle/
+build/
+local.properties
+keystore.properties
+*.jks
+*.keystore
+.idea/
+*.iml
+.kotlin/
+captures/
+
+# No longer used (Firebase removed); never commit
+app/google-services.json
+# Release workflow output
+dist/

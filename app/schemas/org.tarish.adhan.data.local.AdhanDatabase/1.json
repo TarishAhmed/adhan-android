@@ -1,0 +1,141 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "345d286429d4691a7619453aafe4adf3",
+    "entities": [
+      {
+        "tableName": "prayer_day",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`location_key` TEXT NOT NULL, `date` TEXT NOT NULL, `zone` TEXT NOT NULL, `fajr` INTEGER NOT NULL, `sunrise` INTEGER NOT NULL, `zuhr` INTEGER NOT NULL, `asr` INTEGER NOT NULL, `sunset` INTEGER, `maghrib` INTEGER NOT NULL, `isha` INTEGER NOT NULL, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`location_key`, `date`))",
+        "fields": [
+          {
+            "fieldPath": "locationKey",
+            "columnName": "location_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zone",
+            "columnName": "zone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fajr",
+            "columnName": "fajr",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sunrise",
+            "columnName": "sunrise",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zuhr",
+            "columnName": "zuhr",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "asr",
+            "columnName": "asr",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sunset",
+            "columnName": "sunset",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "maghrib",
+            "columnName": "maghrib",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "isha",
+            "columnName": "isha",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchedAt",
+            "columnName": "fetched_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "location_key",
+            "date"
+          ]
+        }
+      },
+      {
+        "tableName": "cached_month",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`location_key` TEXT NOT NULL, `year` INTEGER NOT NULL, `month` INTEGER NOT NULL, `zone` TEXT NOT NULL, `day_count` INTEGER NOT NULL, `fetched_at` INTEGER NOT NULL, PRIMARY KEY(`location_key`, `year`, `month`))",
+        "fields": [
+          {
+            "fieldPath": "locationKey",
+            "columnName": "location_key",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "month",
+            "columnName": "month",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "zone",
+            "columnName": "zone",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dayCount",
+            "columnName": "day_count",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fetchedAt",
+            "columnName": "fetched_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "location_key",
+            "year",
+            "month"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '345d286429d4691a7619453aafe4adf3')"
+    ]
+  }
+}

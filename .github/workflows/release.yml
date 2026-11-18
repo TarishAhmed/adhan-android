@@ -1,0 +1,127 @@
+name: Release
+
+# Publishes a signed APK as a GitHub Release. The app's updater reads the latest release
+# (data/UpdateRepository.kt): the tag is the version, the .apk asset is downloaded, and a
+# "<!-- min-supported: X.Y.Z -->" line in the notes forces everyone older than X.Y.Z to update.
+#
+# Start it from Actions → Release → Run workflow, or push a tag like v2.1.0.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (X.Y.Z), e.g. 2.1.0"
+        required: true
+      min_supported:
+        description: "Optional: force users below this version (X.Y.Z) to update"
+        required: false
+      notes:
+        description: "Optional: what's new (generated notes are added below)"
+        required: false
+  push:
+    tags: ["v*.*.*"]
+
+concurrency: release
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve version
+        id: v
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          INPUT_MIN: ${{ inputs.min_supported }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "push" ]; then V="${GITHUB_REF_NAME#v}"; else V="${INPUT_VERSION#v}"; fi
+          echo "$V" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::Version must be X.Y.Z, got '$V'"; exit 1; }
+          if [ -n "$INPUT_MIN" ]; then
+            echo "$INPUT_MIN" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$' || { echo "::error::min_supported must be X.Y.Z"; exit 1; }
+          fi
+          if [ "$GITHUB_EVENT_NAME" != "push" ] && git rev-parse -q --verify "refs/tags/v$V" >/dev/null; then
+            echo "::error::Tag v$V already exists"; exit 1
+          fi
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # Must be the key that signed the installed builds, or Android refuses the update.
+      - name: Set up signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          for s in KEYSTORE_BASE64 KEYSTORE_PASSWORD KEY_ALIAS KEY_PASSWORD; do
+            [ -n "${!s}" ] || { echo "::error::Repository secret $s is not set"; exit 1; }
+          done
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          {
+            echo "storeFile=$RUNNER_TEMP/release.jks"
+            echo "storePassword=$KEYSTORE_PASSWORD"
+            echo "keyAlias=$KEY_ALIAS"
+            echo "keyPassword=$KEY_PASSWORD"
+          } > keystore.properties
+
+      - name: Test and build release APK
+        run: >
+          ./gradlew :app:testDebugUnitTest :app:assembleRelease
+          -Padhan.versionName=${{ steps.v.outputs.version }}
+          -Padhan.updateRepo=${{ github.repository }}
+
+      - name: Verify signature
+        env:
+          EXPECTED_CERT_SHA256: ${{ secrets.RELEASE_CERT_SHA256 }}
+        run: |
+          APKSIGNER="$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner"
+          APK=app/build/outputs/apk/release/app-release.apk
+          CERTS="$("$APKSIGNER" verify --print-certs "$APK")"
+          echo "$CERTS"
+          if [ -n "$EXPECTED_CERT_SHA256" ]; then
+            ACTUAL="$(echo "$CERTS" | grep -m1 'certificate SHA-256 digest' | awk '{print $NF}')"
+            [ "$ACTUAL" = "$(echo "$EXPECTED_CERT_SHA256" | tr -d ':' | tr 'A-F' 'a-f')" ] \
+              || { echo "::error::APK signed with an unexpected certificate"; exit 1; }
+          fi
+
+      - name: Prepare assets and notes
+        env:
+          V: ${{ steps.v.outputs.version }}
+          MIN: ${{ inputs.min_supported }}
+          NOTES: ${{ inputs.notes }}
+        run: |
+          mkdir dist
+          cp app/build/outputs/apk/release/app-release.apk "dist/adhan-$V.apk"
+          (cd dist && sha256sum "adhan-$V.apk" > "adhan-$V.apk.sha256")
+          {
+            [ -n "$NOTES" ] && printf '%s\n\n' "$NOTES"
+            [ -n "$MIN" ] && printf '<!-- min-supported: %s -->\n' "$MIN"
+            true
+          } > notes.md
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.v.outputs.version }}
+        run: |
+          gh release create "v$V" dist/* \
+            --title "Adhan $V" \
+            --notes-file notes.md \
+            --generate-notes \
+            --target "$GITHUB_SHA"
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f keystore.properties "$RUNNER_TEMP/release.jks"

@@ -1,0 +1,408 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Adhan</string>
+
+    <!-- Navigation -->
+    <string name="nav_home">Today</string>
+    <string name="nav_qibla">Qibla</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_quran">Quran</string>
+
+    <!-- Home -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_night">Peaceful night</string>
+    <string name="home_up_next">Up next</string>
+    <string name="home_remaining">remaining</string>
+    <string name="home_tomorrow">tomorrow</string>
+    <string name="home_refresh">Refresh prayer times</string>
+    <string name="home_refresh_success">Prayer times refreshed</string>
+    <string name="home_refresh_failure">Couldn\'t refresh. Pull down to retry.</string>
+    <string name="home_stale_banner">Showing saved times — couldn\'t refresh.</string>
+    <string name="home_zone_hint">Times shown in %1$s time</string>
+    <string name="home_hijri_approx">%1$s (approx.)</string>
+    <string name="today_label">Today</string>
+    <string name="today_tomorrow">Tomorrow</string>
+    <string name="today_yesterday">Yesterday</string>
+    <string name="today_prev_day">Previous day</string>
+    <string name="today_next_day">Next day</string>
+    <string name="today_back_to_today">Back to today</string>
+    <string name="today_now">Now</string>
+    <string name="today_passed">passed</string>
+    <string name="today_window_label">%1$s time · until %2$s</string>
+    <string name="today_window_between">Between %1$s and %2$s</string>
+    <string name="today_legend_best">Best time</string>
+    <string name="today_legend_late">Getting late</string>
+    <string name="today_legend_ending">Ending soon</string>
+    <string name="today_adhan_settings">Adhan settings</string>
+    <string name="today_adhan_bell_cd">%1$s adhan</string>
+    <string name="today_state_on">On</string>
+    <string name="today_state_off">Off</string>
+    <string name="today_adhan_on">%1$s adhan turned on</string>
+    <string name="today_adhan_off">%1$s adhan turned off</string>
+    <string name="location_blocked_title">Location is turned off for Adhan</string>
+    <string name="location_blocked_body">To use your current location, open Adhan\'s settings, tap Permissions → Location and choose "Allow only while using the app". Or search for your city below instead.</string>
+    <string name="home_set_location_title">Set your location</string>
+    <string name="home_set_location_body">Allow location access or choose a city to see prayer times.</string>
+    <string name="home_next_prayer_cd">Next prayer %1$s at %2$s, in %3$s.</string>
+    <string name="location_chip_placeholder">Set location</string>
+
+    <!-- Urgency (accessibility) -->
+    <string name="urgency_green">plenty of time</string>
+    <string name="urgency_yellow">getting late</string>
+    <string name="urgency_red">ending soon</string>
+    <string name="window_cd">%1$s window, %2$s</string>
+
+    <!-- Errors -->
+    <string name="error_location_generic">Couldn\'t get your location</string>
+    <string name="error_location_off">Location is turned off</string>
+    <string name="error_location_denied">Location permission is needed</string>
+    <string name="error_location_denied_forever">Location permission is blocked. You can allow it in Settings or choose a city.</string>
+    <string name="error_location_timeout">Couldn\'t get a GPS fix. Try again outdoors or choose a city.</string>
+    <string name="error_no_network">No internet connection</string>
+    <string name="error_server">The prayer-times server isn\'t responding. Try again later.</string>
+    <string name="error_bad_data">Received prayer times look wrong. Try again later.</string>
+    <string name="error_prayer_times_generic">Couldn\'t load prayer times</string>
+    <string name="error_geocoder_unavailable">City search isn\'t available on this device.</string>
+    <string name="action_try_again">Try again</string>
+    <string name="action_choose_city">Choose city</string>
+    <string name="action_allow_location">Allow location</string>
+    <string name="action_turn_on" tools:ignore="UnusedResources">Turn on</string>
+    <string name="action_open_settings">Open settings</string>
+
+    <!-- Qibla -->
+    <string name="qibla_title">Qibla compass</string>
+    <string name="qibla_calibration_title">Calibration tips</string>
+    <string name="qibla_calibration_needed">Compass needs calibration</string>
+    <string name="qibla_calibration_body">Move your phone in a figure-8, away from metal or magnets, and hold it flat. Tilt: %1$d°</string>
+    <string name="qibla_heading">Compass heading</string>
+    <string name="qibla_accuracy">Compass accuracy</string>
+    <string name="qibla_direction">Qibla direction</string>
+    <string name="qibla_distance">Distance to Kaaba</string>
+    <string name="qibla_distance_value">%1$s km</string>
+    <string name="qibla_accuracy_excellent">Excellent</string>
+    <string name="qibla_accuracy_good">Good</string>
+    <string name="qibla_accuracy_fair">Fair</string>
+    <string name="qibla_accuracy_poor">Poor</string>
+    <string name="qibla_no_compass_title">Compass not available</string>
+    <string name="qibla_no_compass_body">This device has no compass sensor. Use the map below to find the Qibla direction.</string>
+    <string name="qibla_map_attribution">© OpenStreetMap contributors</string>
+    <string name="qibla_aligned_cd">Facing the Qibla</string>
+    <plurals name="qibla_turn_cd">
+        <item quantity="one">Turn %1$s %2$d degree to face the Qibla</item>
+        <item quantity="other">Turn %1$s %2$d degrees to face the Qibla</item>
+    </plurals>
+    <string name="qibla_left">left</string>
+    <string name="qibla_right">right</string>
+
+    <!-- More -->
+    <string name="quran_title">Holy Quran</string>
+    <string name="quran_search_hint">Surah name, number or 2:256</string>
+    <string name="quran_go_to">Go to %1$d:%2$d</string>
+    <string name="quran_search_translation">Search the translation for “%1$s”</string>
+    <string name="quran_tab_surahs">Surahs</string>
+    <string name="quran_tab_bookmarks">Bookmarks</string>
+    <string name="quran_bookmarks_empty_title">No bookmarks yet</string>
+    <string name="quran_bookmarks_empty_body">Tap the bookmark icon on any verse to save it here.</string>
+    <string name="quran_verse_n">Verse %1$d</string>
+    <string name="quran_surah_subtitle">%1$s · %2$s</string>
+    <string name="quran_continue">Continue reading</string>
+    <string name="quran_continue_detail">%1$s, verse %2$d</string>
+    <string name="quran_reader_subtitle">Surah %1$d · %2$s</string>
+    <string name="quran_jump">Go to verse</string>
+    <string name="quran_jump_label">Verse (1–%1$d)</string>
+    <string name="quran_go">Go</string>
+    <string name="quran_reading_settings">Reading settings</string>
+    <string name="quran_header_detail">%1$s · %2$s · %3$s</string>
+    <string name="quran_makki">Makki</string>
+    <string name="quran_madani">Madani</string>
+    <string name="quran_translation_offline">Couldn\'t load the translation. Showing the Arabic only.</string>
+    <string name="quran_verse_actions">Verse options</string>
+    <string name="quran_verse_ref">%1$d:%2$d</string>
+    <string name="quran_verse_title">%1$s %2$d:%3$d</string>
+    <string name="quran_add_bookmark">Bookmark</string>
+    <string name="quran_remove_bookmark">Remove bookmark</string>
+    <string name="quran_copy">Copy</string>
+    <string name="quran_share">Share</string>
+    <string name="quran_copied">Verse copied</string>
+    <string name="quran_share_ref">— Holy Quran, %1$s %2$d:%3$d (tr. %4$s)</string>
+    <string name="quran_translation">Translation</string>
+    <string name="quran_arabic_size">Arabic text size</string>
+    <string name="quran_translation_size">Translation text size</string>
+    <string name="quran_size_sample">In the name of Allah, Most Gracious, Ever Merciful.</string>
+    <string name="quran_search_title">Search the Quran</string>
+    <string name="quran_search_words_hint">Words in the translation</string>
+    <string name="quran_search_none_title">No verses found</string>
+    <string name="quran_search_none_body">Try a different word or spelling.</string>
+    <string name="quran_search_none_offline">You\'re offline. Only downloaded surahs can be searched.</string>
+    <string name="quran_offline">Download for offline reading</string>
+    <string name="quran_offline_progress" tools:ignore="PluralsCandidate">Downloading… %1$d of %2$d surahs</string>
+    <string name="quran_offline_done">All 114 surahs available offline</string>
+    <string name="quran_offline_partial" tools:ignore="PluralsCandidate">%1$d of %2$d surahs downloaded · tap to download all</string>
+    <string name="action_clear">Clear</string>
+    <string name="settings_title">Settings</string>
+    <string name="settings_section_reliability">Make sure the adhan plays</string>
+    <string name="settings_expanded">Expanded</string>
+    <string name="settings_collapsed">Collapsed</string>
+    <string name="settings_cache_summary" tools:ignore="PluralsCandidate">%1$d days of times saved · %2$d sounds (%3$s) · last sync %4$s</string>
+    <string name="settings_times_cleared">Saved times cleared and downloaded again</string>
+    <string name="settings_sounds_deleted">Unused sounds deleted</string>
+    <string name="settings_working">Working</string>
+    <string name="about_quran_source">Quran translation from alislam.org.</string>
+    <string name="more_section_prayer">Prayer</string>
+    <string name="more_section_appearance">Appearance</string>
+    <string name="more_section_about">About</string>
+    <string name="more_notifications">Notifications</string>
+    <string name="more_location">Location</string>
+    <string name="more_advanced">Advanced</string>
+    <string name="more_advanced_subtitle">Scheduled alarms, saved data</string>
+    <string name="more_about">About this app</string>
+    <string name="about_version">Version %1$s (%2$d)</string>
+    <string name="about_source">Prayer times provided by alislam.org.</string>
+    <string name="about_map">Map data © OpenStreetMap contributors.</string>
+    <string name="about_copyright" tools:ignore="PluralsCandidate">© %1$d Adhan</string>
+    <string name="about_licenses">Licenses</string>
+
+    <!-- Appearance -->
+    <string name="theme_system">System</string>
+    <string name="theme_light">Light</string>
+    <string name="theme_dark">Dark</string>
+
+    <!-- Notifications -->
+    <string name="notifications_title">Notifications</string>
+    <string name="notif_banner_blocked">Notifications are off. Turn them on to hear the adhan.</string>
+    <string name="notif_banner_exact">Allow alarms so the adhan plays exactly on time.</string>
+    <string name="notif_banner_battery">Battery optimisation may delay the adhan.</string>
+    <string name="notif_banner_channel_blocked">%1$s alerts are blocked in system settings.</string>
+    <string name="action_enable">Enable</string>
+    <string name="action_allow">Allow</string>
+    <string name="action_fix">Fix</string>
+    <string name="action_open">Open</string>
+    <string name="notif_reminder_suffix"> • reminder %1$d min before</string>
+    <string name="days_every_day" tools:ignore="UnusedResources">Every day</string>
+    <string name="days_weekdays">Weekdays</string>
+    <string name="days_weekends">Weekends</string>
+    <string name="editor_enable">Adhan for %1$s</string>
+    <string name="editor_days">Days</string>
+    <string name="editor_keep_one_day">Keep at least one day selected.</string>
+    <string name="editor_sound">Sound</string>
+    <string name="editor_sound_title">%1$s — Sound</string>
+    <string name="editor_reminder">Reminder</string>
+    <string name="editor_reminder_off">Off</string>
+    <string name="editor_reminder_value">%1$d min</string>
+    <plurals name="editor_reminder_help">
+        <item quantity="one">You\'ll get a reminder %1$d minute before %2$s; the adhan still plays on time.</item>
+        <item quantity="other">You\'ll get a reminder %1$d minutes before %2$s; the adhan still plays on time.</item>
+    </plurals>
+    <string name="editor_test">Play test adhan</string>
+    <string name="editor_test_scheduled">Test adhan in 5 seconds</string>
+    <string name="editor_test_blocked">Turn on notifications to test.</string>
+    <string name="sound_download_failed" tools:ignore="UnusedResources">Couldn\'t download %1$s. It will be retried when you\'re online.</string>
+    <string name="sound_playing">Playing %1$s</string>
+    <string name="action_stop">Stop</string>
+
+    <!-- Notification content -->
+    <string name="notif_adhan_title">%1$s</string>
+    <string name="notif_adhan_body">It\'s time for %1$s prayer.</string>
+    <string name="notif_missed_body">Missed: %1$s was at %2$s.</string>
+    <string name="notif_reminder_title">%1$s in %2$d min</string>
+    <string name="notif_reminder_body">%1$s begins at %2$s.</string>
+    <string name="notif_test_title">Test — %1$s</string>
+    <string name="notif_test_body">This is how your %1$s adhan will sound.</string>
+    <string name="notif_action_stop">Stop adhan</string>
+    <string name="channel_adhan_name">%1$s adhan</string>
+    <string name="channel_adhan_desc">Adhan at %1$s time</string>
+    <string name="channel_group_prayers">Prayer times</string>
+    <string name="channel_reminder_name">Prayer reminders</string>
+    <string name="channel_playback_name">Adhan playing</string>
+
+    <!-- Location -->
+    <string name="location_title">Location</string>
+    <string name="location_current">Current location</string>
+    <string name="location_use_current">Use current location</string>
+    <string name="location_auto">Auto-detect location</string>
+    <string name="location_auto_on">Using GPS to find your location</string>
+    <string name="location_auto_off">Using a manually set city</string>
+    <string name="location_search">Search city</string>
+    <string name="location_search_hint">e.g. Mecca, London, Karachi</string>
+    <string name="location_search_empty">No matches found</string>
+    <string name="location_search_error">Couldn\'t search. Check your connection.</string>
+    <string name="location_last_updated">Last updated: %1$s</string>
+    <string name="location_source_gps">GPS</string>
+    <string name="location_source_manual">Manual</string>
+    <string name="location_set_to">Location set to %1$s</string>
+    <string name="location_rationale">Location is used only to find prayer times and the Qibla for where you are. You can also choose a city instead.</string>
+    <string name="action_continue">Continue</string>
+
+    <!-- Onboarding -->
+    <string name="onb_get_started">Get started</string>
+    <string name="onb_step_cd">Step %1$d of %2$d</string>
+    <string name="onb_location_denied_body">No problem. You can choose your city instead, and change this any time in Settings.</string>
+    <string name="onb_choose_city_cta">Choose my city</string>
+    <string name="onb_try_again">Ask for location again</string>
+    <string name="onb_reliability_title">Make sure the adhan plays on time</string>
+    <string name="onb_reliability_body">Some phones delay or block alarms to save battery. Fix these once and the adhan will play at the right minute.</string>
+    <string name="onb_exact_title">Alarms at the exact minute</string>
+    <string name="onb_battery_title">Not stopped by battery saver</string>
+    <string name="onb_fix_done">All set</string>
+    <string name="onb_fix_needed">Needs your permission</string>
+    <string name="onb_finish">Finish</string>
+    <string name="onb_finish_later">I\'ll do this later</string>
+    <string name="onb_welcome_title">Welcome to Adhan</string>
+    <string name="onb_welcome_body">Prayer times from alislam.org, the adhan on time, the Holy Quran and the Qibla, wherever you are.</string>
+    <string name="onb_location_title">Allow location</string>
+    <string name="onb_location_body">We use your location to get accurate prayer times and the Qibla direction. Your coordinates are sent to alislam.org only to fetch your timetable.</string>
+    <string name="onb_location_cta">Allow location</string>
+    <string name="onb_choose_city">Choose city instead</string>
+    <string name="onb_notif_title">Allow notifications</string>
+    <string name="onb_notif_body">Hear the adhan at each prayer time. You can choose the sound, reminders and days for every prayer.</string>
+    <string name="onb_notif_cta">Allow notifications</string>
+
+    <!-- Battery / exact alarm -->
+    <string name="battery_title">Keep the adhan on time</string>
+    <string name="battery_body">Some phones stop apps in the background. For reliable adhan:</string>
+    <string name="battery_step1">1. Turn off battery optimisation for Adhan.</string>
+    <string name="battery_step2">2. Allow background activity / autostart (on some phones).</string>
+    <string name="battery_step3">3. Lock Adhan in recent apps (Xiaomi, Huawei).</string>
+    <string name="battery_status_on">Battery optimisation: On</string>
+    <string name="battery_status_off">Battery optimisation: Off</string>
+    <string name="battery_turn_off">Turn off battery optimisation</string>
+    <string name="battery_open_settings">Open battery settings</string>
+    <string name="battery_oem_autostart">Open Autostart</string>
+    <string name="battery_oem_saver">Open battery saver</string>
+    <string name="battery_oem_launch">Open app launch settings</string>
+    <string name="battery_oem_sleeping">Open sleeping apps</string>
+    <string name="battery_oem_autolaunch">Allow auto-launch</string>
+    <string name="battery_oem_background">Allow background activity</string>
+    <string name="exact_title">Allow adhan alarms</string>
+    <string name="exact_body">To play the adhan exactly on time, Adhan needs permission to set alarms.</string>
+    <string name="action_not_now">Not now</string>
+
+    <!-- Advanced -->
+    <string name="adv_battery">Battery optimisation</string>
+    <string name="adv_battery_ok">Not restricted — alarms will be reliable</string>
+    <string name="adv_battery_bad">Restricted — the adhan may be late</string>
+    <string name="adv_exact">Exact alarms</string>
+    <string name="adv_exact_ok">Allowed</string>
+    <string name="adv_exact_bad">Not allowed — tap to allow</string>
+    <string name="adv_scheduled">Scheduled alarms</string>
+    <string name="adv_scheduled_none">No alarms scheduled</string>
+    <string name="adv_refresh_now">Refresh now</string>
+    <string name="adv_clear_times">Clear saved times</string>
+    <string name="adv_clear_times_confirm">Delete all saved prayer times? They will be downloaded again.</string>
+    <string name="adv_delete_sounds">Delete downloaded sounds</string>
+    <string name="adv_delete_sounds_confirm">Delete downloaded adhan sounds that aren\'t in use?</string>
+
+    <!-- Update -->
+    <string name="update_required_title">Update required</string>
+    <string name="update_required_body">A required update is available. Please update to keep using Adhan.</string>
+    <string name="update_version">Version %1$s</string>
+    <string name="update_required_help">Install the update, then reopen the app.</string>
+    <string name="update_available_body_size">Version %1$s is available (%2$s).</string>
+    <string name="update_failed">The download didn\'t finish. Check your connection and try again.</string>
+    <string name="update_downloading">Downloading…</string>
+    <string name="update_install">Install</string>
+    <string name="settings_updates">App updates</string>
+    <string name="settings_update_checking">Checking for updates…</string>
+    <string name="settings_update_current">Version %1$s · up to date</string>
+    <string name="settings_update_tap">Version %1$s · tap to check for updates</string>
+    <string name="settings_update_available">Version %1$s is available · tap to install</string>
+    <string name="settings_update_downloading_pct">Downloading… %1$d%%</string>
+    <string name="update_available_title">Update available</string>
+    <string name="update_available_body">Version %1$s is available with fixes and improvements.</string>
+    <string name="action_later">Later</string>
+    <string name="action_update">Update</string>
+
+    <!-- Widget -->
+    <string name="widget_description">Shows the next prayer time</string>
+    <string name="widget_placeholder">Open Adhan to load prayer times</string>
+    <string name="widget_now">now</string>
+    <string name="widget_in_min">in %1$d min</string>
+    <string name="widget_in_h">in %1$d h</string>
+    <string name="widget_in_h_min">in %1$d h %2$d min</string>
+
+    <!-- Common -->
+    <string name="action_close">Close</string>
+    <string name="action_ok" tools:ignore="UnusedResources">OK</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_refresh" tools:ignore="UnusedResources">Refresh</string>
+    <string name="action_back">Back</string>
+
+    <!-- Hijri months -->
+    <string-array name="hijri_months">
+        <item>Muharram</item><item>Safar</item><item>Rabi\' al-Awwal</item><item>Rabi\' al-Thani</item>
+        <item>Jumada al-Ula</item><item>Jumada al-Akhirah</item><item>Rajab</item><item>Sha\'ban</item>
+        <item>Ramadan</item><item>Shawwal</item><item>Dhu al-Qi\'dah</item><item>Dhu al-Hijjah</item>
+    </string-array>
+
+    <!-- Prayer names (proper nouns; resources for future translation) -->
+    <string name="prayer_fajr">Fajr</string>
+    <string name="prayer_sunrise">Sunrise</string>
+    <string name="prayer_zuhr">Zuhr</string>
+    <string name="prayer_asr">Asr</string>
+    <string name="prayer_sunset">Sunset</string>
+    <string name="prayer_maghrib">Maghrib</string>
+    <string name="prayer_isha">Isha</string>
+
+    <!-- Additional copy used by the implementation -->
+    <string name="channel_updates_name">App updates</string>
+    <string name="widget_cd">Next prayer %1$s at %2$s, %3$s, %4$s</string>
+    <string name="home_duration_cd">%1$s %2$s</string>
+    <plurals name="duration_hours">
+        <item quantity="one">%d hour</item>
+        <item quantity="other">%d hours</item>
+    </plurals>
+    <plurals name="duration_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+    <string name="home_no_data_title">Couldn\'t load prayer times</string>
+    <string name="location_loading">…</string>
+    <string name="location_coords">%1$s°, %2$s°</string>
+    <string name="adv_scheduled_item">%1$s — %2$s — %3$s</string>
+    <string name="adv_kind_adhan">Adhan</string>
+    <string name="adv_kind_reminder">Reminder</string>
+    <string name="adv_kind_test">Test</string>
+    <string name="adv_never">Never</string>
+    <string name="adv_debug">Debug</string>
+    <string name="adv_debug_sync">Run sync now</string>
+    <string name="adv_debug_widget">Update widget now</string>
+    <string name="adv_debug_test_all">Fire test alarm for each prayer in 10 s steps</string>
+    <string name="adv_debug_dump">Dump state to logcat</string>
+    <string name="sound_download_failed_wifi">Couldn\'t download %1$s. It will be retried on Wi‑Fi.</string>
+    <string name="licenses_title">Open-source licenses</string>
+    <string name="licenses_body">Adhan uses AndroidX and Jetpack Compose (Apache 2.0), Kotlin and kotlinx libraries (Apache 2.0), Dagger/Hilt (Apache 2.0), Retrofit and OkHttp (Apache 2.0), Media3 ExoPlayer (Apache 2.0), Google Play services (Android SDK License), osmdroid (Apache 2.0), Timber (Apache 2.0), Inter, Noto Serif, Amiri and Scheherazade New fonts (SIL Open Font License 1.1). Quran Arabic text (Indo-Pak) from quran.com; translations from alislam.org. Map tiles © OpenStreetMap contributors (ODbL).</string>
+    <string name="qibla_refresh">Refresh location</string>
+    <string name="qibla_direction_value">%1$s° %2$s</string>
+    <string name="qibla_heading_value">%1$s°</string>
+    <string name="location_clear_search">Clear search</string>
+    <string name="editor_close">Close</string>
+    <string name="sound_downloaded">Downloaded</string>
+    <string name="sound_not_downloaded">Not downloaded</string>
+    <plurals name="settings_adhans_on">
+        <item quantity="one">%1$d of 5 prayers have adhan on</item>
+        <item quantity="other">%1$d of 5 prayers have adhan on</item>
+    </plurals>
+    <plurals name="quran_verses">
+        <item quantity="one">%1$d verse</item>
+        <item quantity="other">%1$d verses</item>
+    </plurals>
+    <plurals name="quran_show_notes">
+        <item quantity="one">Show note</item>
+        <item quantity="other">Show %1$d notes</item>
+    </plurals>
+    <plurals name="quran_hide_notes">
+        <item quantity="one">Hide note</item>
+        <item quantity="other">Hide %1$d notes</item>
+    </plurals>
+    <plurals name="quran_search_offline">
+        <item quantity="one">Offline · %1$d match in downloaded surahs</item>
+        <item quantity="other">Offline · %1$d matches in downloaded surahs</item>
+    </plurals>
+    <plurals name="quran_search_results">
+        <item quantity="one">%1$d verse</item>
+        <item quantity="other">%1$d verses</item>
+    </plurals>
+</resources>

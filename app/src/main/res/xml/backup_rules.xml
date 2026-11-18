@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only DataStore is backed up; downloaded sounds in files/adhan/ are re-downloadable and excluded. -->
+<full-backup-content>
+    <include domain="file" path="datastore/" />
+</full-backup-content>
