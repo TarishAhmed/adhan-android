@@ -57,6 +57,8 @@ class AppUpdater @Inject constructor(
     private val _state = MutableStateFlow(UpdaterState())
     val state: StateFlow<UpdaterState> = _state.asStateFlow()
     private var download: Job? = null
+    /** Sent to "Install unknown apps"; the install continues when the user comes back. */
+    @Volatile private var awaitingPermission = false
 
     private val apkFile get() = File(File(context.cacheDir, DIR).apply { mkdirs() }, "adhan-${_state.value.info.version}.apk")
 
@@ -128,8 +130,14 @@ class AppUpdater @Inject constructor(
         runCatching { context.startActivity(intent) }
     }
 
+    /** Call on resume: finishes an install that was waiting for the "Install unknown apps" permission. */
+    fun resumePendingInstall() {
+        if (awaitingPermission && canInstall() && _state.value.download == UpdateDownload.Ready) install()
+    }
+
     private fun install() {
-        if (!canInstall()) { openInstallPermissionSettings(); return }
+        if (!canInstall()) { awaitingPermission = true; openInstallPermissionSettings(); return }
+        awaitingPermission = false
         val uri = FileProvider.getUriForFile(context, "${context.packageName}.updates", apkFile)
         val intent = Intent(Intent.ACTION_VIEW)
             .setDataAndType(uri, "application/vnd.android.package-archive")

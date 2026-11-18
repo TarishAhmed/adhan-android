@@ -76,6 +76,11 @@ class MiscDomainTest {
         assertThat(GitHubUpdateRepository.minSupported(null)).isNull()
     }
 
+    @Test fun releaseNotes_dropGeneratedChangelogLinkAndMarkup() {
+        val body = "Adhan 2.1.0\n\n• **New** Quran\n<!-- min-supported: 2.1.0 -->\n\n**Full Changelog**: https://github.com/x/y/commits/v2.1.0"
+        assertThat(GitHubUpdateRepository.releaseNotes(body)).isEqualTo("Adhan 2.1.0\n\n• New Quran")
+    }
+
     @Test fun greetingBoundaries() {
         val cases = mapOf(
             4 to Greeting.NIGHT, 5 to Greeting.MORNING, 11 to Greeting.MORNING, 12 to Greeting.AFTERNOON,

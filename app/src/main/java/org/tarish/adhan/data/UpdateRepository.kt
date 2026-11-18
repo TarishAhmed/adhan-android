@@ -91,6 +91,16 @@ class GitHubUpdateRepository @Inject constructor(
         private val HTML_COMMENT = Regex("""<!--.*?-->""", RegexOption.DOT_MATCHES_ALL)
         private const val MAX_NOTES = 800
 
+        /** Plain text for the dialog: drops hidden markers, GitHub's "Full Changelog" link and bold markup. */
+        fun releaseNotes(body: String?): String = body.orEmpty()
+            .replace(HTML_COMMENT, "")
+            .lines()
+            .filterNot { it.trimStart().startsWith("**Full Changelog**") }
+            .joinToString("\n")
+            .replace("**", "")
+            .trim()
+            .take(MAX_NOTES)
+
         fun minSupported(body: String?): String? = body?.let { MIN_SUPPORTED.find(it)?.groupValues?.get(1) }
 
         private fun decide(current: String, r: ReleaseDto): UpdateInfo {
@@ -104,7 +114,7 @@ class GitHubUpdateRepository @Inject constructor(
                 apkUrl = apk?.url.orEmpty(),
                 sha256 = apk?.digest?.removePrefix("sha256:")?.lowercase(),
                 sizeBytes = apk?.size ?: 0,
-                notes = r.body.orEmpty().replace(HTML_COMMENT, "").trim().take(MAX_NOTES),
+                notes = releaseNotes(r.body),
             )
         }
 

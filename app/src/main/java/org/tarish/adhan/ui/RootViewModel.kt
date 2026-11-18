@@ -59,6 +59,8 @@ class RootViewModel @Inject constructor(
     fun checkUpdates() {
         viewModelScope.launch {
             val info = updater.check()
+            // A fresh install is already current; don't interrupt onboarding (Settings still shows it).
+            if (!settings.onboardingDone.first()) return@launch
             if (info.type == UpdateInfo.Type.GENERAL && !generalShownThisProcess) {
                 generalShownThisProcess = true
                 show(GlobalDialog.GENERAL_UPDATE)
@@ -70,6 +72,7 @@ class RootViewModel @Inject constructor(
 
     /** Re-check on resume so the force gate disappears after updating elsewhere. */
     fun onResume() {
+        updater.resumePendingInstall()
         if (updater.state.value.info.type == UpdateInfo.Type.FORCE) checkUpdates()
     }
 
