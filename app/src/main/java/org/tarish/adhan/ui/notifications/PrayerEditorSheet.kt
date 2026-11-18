@@ -71,6 +71,10 @@ import java.time.temporal.WeekFields
 import java.util.Locale
 import kotlin.math.roundToInt
 import org.tarish.adhan.R
+import org.tarish.adhan.ui.theme.Radius
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.foundation.layout.heightIn
 import org.tarish.adhan.data.DownloadState
 import org.tarish.adhan.domain.model.AdhanSound
 import org.tarish.adhan.domain.model.PrayerName
@@ -164,8 +168,8 @@ private fun MainPage(
         SectionHeader(stringResource(R.string.editor_days))
         val first = WeekFields.of(Locale.getDefault()).firstDayOfWeek
         val week = (0 until 7).map { first.plus(it.toLong()) }
-        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            week.forEach { d -> DayChip(d, d in pref.days, pref.enabled) { vm.toggleDay(pref.prayer, d) } }
+        Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            week.forEach { d -> DayChip(d, d in pref.days, pref.enabled, Modifier.weight(1f)) { vm.toggleDay(pref.prayer, d) } }
         }
         SectionHeader(stringResource(R.string.editor_sound))
         ListItem(
@@ -216,15 +220,18 @@ private fun MainPage(
 }
 
 @Composable
-private fun DayChip(day: DayOfWeek, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
+private fun DayChip(day: DayOfWeek, selected: Boolean, enabled: Boolean, modifier: Modifier, onClick: () -> Unit) {
     val cs = MaterialTheme.colorScheme
     val alpha = if (enabled) 1f else 0.5f
+    val fullName = day.getDisplayName(TextStyle.FULL, Locale.getDefault())
+    // Shares the row's width so all seven stay ≥ 48dp tall and ~46dp wide even on 360dp phones.
     Surface(
-        onClick = onClick,
-        shape = RoundedCornerShape(12.dp),
+        checked = selected,
+        onCheckedChange = { onClick() },
+        shape = RoundedCornerShape(Radius.md),
         color = if (selected) cs.primary.copy(alpha = alpha) else cs.surface,
         border = if (selected) null else BorderStroke(1.dp, cs.outline.copy(alpha = alpha)),
-        modifier = Modifier.size(width = 40.dp, height = 48.dp),
+        modifier = modifier.heightIn(min = 48.dp).semantics { contentDescription = fullName },
     ) {
         Box(contentAlignment = Alignment.Center) {
             Text(

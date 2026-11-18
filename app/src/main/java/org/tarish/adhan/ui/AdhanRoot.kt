@@ -10,6 +10,9 @@ import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -26,6 +29,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -41,7 +46,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
@@ -174,22 +182,39 @@ private fun Shell(nav: NavHostController, startOnboarding: Boolean, mode: org.ta
     val entry by nav.currentBackStackEntryAsState()
     val dest = entry?.destination
     val showBar = TABS.any { t -> dest?.hierarchy?.any { it.hasRoute(t.cls) } == true }
+    // Landscape and tablets: a side rail instead of a bottom bar, so content keeps its height.
+    val wide = with(LocalDensity.current) { LocalWindowInfo.current.containerSize.width.toDp() } >= 600.dp
+    val isSelected = { t: Tab -> dest?.hierarchy?.any { it.hasRoute(t.cls) } == true }
+    val onTab = { t: Tab ->
+        if (!isSelected(t)) {
+            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+            nav.switchTab(t.route)
+        }
+    }
 
+    Row(Modifier.fillMaxSize()) {
+    if (showBar && wide) NavigationRail(Modifier.fillMaxHeight()) {
+        Spacer(Modifier.weight(1f))
+        TABS.forEach { t ->
+            NavigationRailItem(
+                selected = isSelected(t),
+                onClick = { onTab(t) },
+                icon = { Icon(if (isSelected(t)) t.selectedIcon else t.icon, null) },
+                label = { Text(stringResource(t.label)) },
+            )
+        }
+        Spacer(Modifier.weight(1f))
+    }
     Scaffold(
+        modifier = Modifier.weight(1f),
         snackbarHost = { SnackbarHost(LocalSnackbarHost.current) },
         bottomBar = {
-            if (showBar) NavigationBar {
+            if (showBar && !wide) NavigationBar {
                 TABS.forEach { t ->
-                    val selected = dest?.hierarchy?.any { it.hasRoute(t.cls) } == true
                     NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            if (!selected) {
-                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                nav.switchTab(t.route)
-                            }
-                        },
-                        icon = { Icon(if (selected) t.selectedIcon else t.icon, null) },
+                        selected = isSelected(t),
+                        onClick = { onTab(t) },
+                        icon = { Icon(if (isSelected(t)) t.selectedIcon else t.icon, null) },
                         label = { Text(stringResource(t.label)) },
                     )
                 }
@@ -244,5 +269,6 @@ private fun Shell(nav: NavHostController, startOnboarding: Boolean, mode: org.ta
                 QuranSearchScreen(onBack = { nav.popBackStack() }, onOpen = { nav.navigate(SurahReader(it.surah, it.verse)) })
             }
         }
+    }
     }
 }
