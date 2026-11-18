@@ -149,7 +149,7 @@
     <string name="settings_times_cleared">Saved times cleared and downloaded again</string>
     <string name="settings_sounds_deleted">Unused sounds deleted</string>
     <string name="settings_working">Working</string>
-    <string name="about_quran_source">Quran translation from alislam.org.</string>
+    <string name="about_quran_source">Holy Quran text and translations from alislam.org.</string>
     <string name="more_section_prayer">Prayer</string>
     <string name="more_section_appearance">Appearance</string>
     <string name="more_section_about">About</string>
@@ -373,7 +373,7 @@
     <string name="adv_debug_dump">Dump state to logcat</string>
     <string name="sound_download_failed_wifi">Couldn\'t download %1$s. It will be retried on Wi‑Fi.</string>
     <string name="licenses_title">Open-source licenses</string>
-    <string name="licenses_body">Adhan uses AndroidX and Jetpack Compose (Apache 2.0), Kotlin and kotlinx libraries (Apache 2.0), Dagger/Hilt (Apache 2.0), Retrofit and OkHttp (Apache 2.0), Media3 ExoPlayer (Apache 2.0), Google Play services (Android SDK License), osmdroid (Apache 2.0), Timber (Apache 2.0), Inter, Noto Serif, Amiri and Scheherazade New fonts (SIL Open Font License 1.1). Quran Arabic text (Indo-Pak) from quran.com; translations from alislam.org. Map tiles © OpenStreetMap contributors (ODbL).</string>
+    <string name="licenses_body">Adhan uses AndroidX and Jetpack Compose (Apache 2.0), Kotlin and kotlinx libraries (Apache 2.0), Dagger/Hilt (Apache 2.0), Retrofit and OkHttp (Apache 2.0), Media3 ExoPlayer (Apache 2.0), Google Play services (Android SDK License), osmdroid (Apache 2.0), Timber (Apache 2.0), Inter, Noto Serif, Amiri and Scheherazade New fonts (SIL Open Font License 1.1). Quran Arabic text (Indo-Pak) and translations from alislam.org. Map tiles © OpenStreetMap contributors (ODbL).</string>
     <string name="qibla_refresh">Refresh location</string>
     <string name="qibla_direction_value">%1$s° %2$s</string>
     <string name="qibla_heading_value">%1$s°</string>

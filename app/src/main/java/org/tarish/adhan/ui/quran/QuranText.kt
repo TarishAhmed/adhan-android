@@ -40,8 +40,3 @@ fun highlighted(raw: String, highlight: Color): AnnotatedString = buildAnnotated
 
 /** Plain text for copy/share: footnote markers and tags removed. */
 fun plainTranslation(text: String): String = text.replace(FOOTNOTE_REF, "").replace(TAG, "").trim()
-
-private const val URDU_DIGITS = "۰۱۲۳۴۵۶۷۸۹"
-
-/** Verse-end ornament in the Indo-Pak style, e.g. ﴿۱۲﴾. */
-fun verseEndMarker(n: Int): String = "﴿" + n.toString().map { URDU_DIGITS[it - '0'] }.joinToString("") + "﴾"

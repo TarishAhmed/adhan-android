@@ -292,7 +292,8 @@ private fun AyahCard(
         }
         Spacer(Modifier.height(Spacing.sm))
         Text(
-            verse.arabic + " " + verseEndMarker(verse.number),
+            // The text carries its own end ornament as alislam prints it, e.g. ﴿۵﴾ or ﴿٪۷﴾ (rukūʿ).
+            verse.arabic,
             style = quranText(prefs.arabicSp).copy(textDirection = TextDirection.Rtl, textAlign = if (bismillah) TextAlign.Center else TextAlign.Start),
             color = cs.onSurface,
             modifier = Modifier.fillMaxWidth(),
@@ -442,7 +443,7 @@ private fun ReadingSettingsSheet(
             Spacer(Modifier.height(Spacing.lg))
             SizeSlider(stringResource(R.string.quran_arabic_size), prefs.arabicSp, QuranSettings.ARABIC_RANGE, onArabic)
             Text(
-                "بِسۡمِ اللهِ الرَّحۡمٰنِ الرَّحِيۡمِ",
+                "بِسۡمِ اللّٰہِ الرَّحۡمٰنِ الرَّحِیۡمِ",
                 style = quranText(prefs.arabicSp).copy(textDirection = TextDirection.Rtl),
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),

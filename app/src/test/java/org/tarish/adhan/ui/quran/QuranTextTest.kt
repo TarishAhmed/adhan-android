@@ -13,9 +13,4 @@ class QuranTextTest {
     @Test fun plainTranslation_keepsOrdinaryBrackets() {
         assertThat(plainTranslation("[the believers] are those")).isEqualTo("[the believers] are those")
     }
-
-    @Test fun verseEndMarker_usesUrduDigits() {
-        assertThat(verseEndMarker(1)).isEqualTo("﴿۱﴾")
-        assertThat(verseEndMarker(287)).isEqualTo("﴿۲۸۷﴾")
-    }
 }
