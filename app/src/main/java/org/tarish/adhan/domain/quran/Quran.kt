@@ -13,11 +13,30 @@ data class Surah(
     val verseCount: Int,
 )
 
-/** Ahmadiyya English translations offered by alislam.org; [key] is the API's edition key. */
-enum class TranslationEdition(val key: String, val translator: String) {
-    ZAFRULLA_KHAN("zk", "Muhammad Zafrulla Khan"),
-    SHER_ALI("en", "Maulawi Sher Ali"),
-    FIVE_VOLUME("v5", "Five Volume Commentary");
+/**
+ * Ahmadiyya translations offered by alislam.org's Quran reader; [key] is the API's edition key.
+ * [translator] is blank where alislam names no translator. Malayalam isn't offered by that source.
+ */
+enum class TranslationEdition(val key: String, val language: String, val translator: String, val rtl: Boolean = false) {
+    ZAFRULLA_KHAN("zk", "English", "Muhammad Zafrulla Khan"),
+    SHER_ALI("en", "English", "Maulawi Sher Ali"),
+    FIVE_VOLUME("v5", "English", "Five Volume Commentary"),
+    SHORT_COMMENTARY("sc", "English", "Short Commentary"),
+    URDU("ur", "Urdu", "Hazrat Mirza Tahir Ahmad", rtl = true),
+    TAFSEER_SAGHEER("ts", "Urdu", "Tafseer-e-Sagheer", rtl = true),
+    BANGLA("bn", "Bangla", ""),
+    CHINESE("cn", "Chinese", "Short Commentary"),
+    GERMAN("de", "German", ""),
+    SPANISH("es", "Spanish", ""),
+    FRENCH("fr", "French", ""),
+    HEBREW("he", "Hebrew", "", rtl = true),
+    ITALIAN("it", "Italian", ""),
+    MYANMAR("my", "Myanmar (Burmese)", ""),
+    NORWEGIAN("nw", "Norwegian", "Short Commentary"),
+    SWEDISH("sv", "Swedish", "");
+
+    /** "English · Maulawi Sher Ali", or just the language when there is no translator name. */
+    val label: String get() = if (translator.isBlank()) language else "$language · $translator"
 
     companion object {
         val DEFAULT = ZAFRULLA_KHAN

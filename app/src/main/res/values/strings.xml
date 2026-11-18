@@ -128,6 +128,12 @@
     <string name="quran_copied">Verse copied</string>
     <string name="quran_share_ref">— Holy Quran, %1$s %2$d:%3$d (tr. %4$s)</string>
     <string name="quran_translation">Translation</string>
+    <string name="quran_show_translation">Show translation</string>
+    <string name="quran_arabic_only">Arabic only</string>
+    <string name="quran_choose_translation">Choose a translation</string>
+    <string name="quran_translation_search">Language or translator</string>
+    <string name="quran_translation_standard">Translation</string>
+    <string name="quran_translation_none">No translation matches “%1$s”</string>
     <string name="quran_arabic_size">Arabic text size</string>
     <string name="quran_translation_size">Translation text size</string>
     <string name="quran_size_sample">In the name of Allah, Most Gracious, Ever Merciful.</string>
@@ -211,6 +217,8 @@
     <string name="notif_test_title">Test — %1$s</string>
     <string name="notif_test_body">This is how your %1$s adhan will sound.</string>
     <string name="notif_action_stop">Stop adhan</string>
+    <string name="notif_adhan_silenced_call">It\'s time for %1$s prayer. The adhan was silenced because you were on a call.</string>
+    <string name="notif_stop_hint">Press any volume or power button to stop</string>
     <string name="channel_adhan_name">%1$s adhan</string>
     <string name="channel_adhan_desc">Adhan at %1$s time</string>
     <string name="channel_group_prayers">Prayer times</string>

@@ -1,31 +1,22 @@
 package org.tarish.adhan.ui.quran
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.CloudDownload
+import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
@@ -48,13 +39,13 @@ import org.tarish.adhan.data.quran.QuranSettings
 import org.tarish.adhan.domain.quran.TranslationEdition
 import org.tarish.adhan.ui.components.SectionHeader
 import org.tarish.adhan.ui.components.SettingRow
-import org.tarish.adhan.ui.theme.Spacing
 import org.tarish.adhan.work.QuranDownloadWorker
 import org.tarish.adhan.work.WorkScheduler
 import javax.inject.Inject
 
 /** [running] carries "done of total" while the offline download is in progress. */
 data class QuranSettingsUi(
+    val showTranslation: Boolean = true,
     val edition: TranslationEdition = TranslationEdition.DEFAULT,
     val downloaded: Int = 0,
     val running: Pair<Int, Int>? = null,
@@ -74,10 +65,11 @@ class QuranSettingsViewModel @Inject constructor(
         }
     }
 
-    val ui = combine(settings.edition, settings.edition.flatMapLatest(repo::completeSurahs), work, ::QuranSettingsUi)
+    val ui = combine(settings.showTranslation, settings.edition, settings.edition.flatMapLatest(repo::completeSurahs), work, ::QuranSettingsUi)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QuranSettingsUi())
 
     fun setEdition(e: TranslationEdition) { viewModelScope.launch { settings.setEdition(e) } }
+    fun setShowTranslation(v: Boolean) { viewModelScope.launch { settings.setShowTranslation(v) } }
     fun download() { workScheduler.downloadQuran(ui.value.edition) }
 
     companion object { const val SURAH_COUNT = 114 }
@@ -92,9 +84,17 @@ fun QuranSettingsSection(vm: QuranSettingsViewModel = hiltViewModel()) {
     Column {
         SectionHeader(stringResource(R.string.quran_title))
         SettingRow(
-            title = stringResource(R.string.quran_translation),
+            title = stringResource(R.string.quran_show_translation),
             icon = Icons.AutoMirrored.Outlined.MenuBook,
-            subtitle = ui.edition.translator,
+            subtitle = if (ui.showTranslation) ui.edition.label else stringResource(R.string.quran_arabic_only),
+            checked = ui.showTranslation,
+            onCheckedChange = vm::setShowTranslation,
+        )
+        if (!ui.showTranslation) return@Column
+        SettingRow(
+            title = stringResource(R.string.quran_translation),
+            icon = Icons.Outlined.Translate,
+            subtitle = ui.edition.label,
             onClick = { picking = true },
         )
         val running = ui.running
@@ -115,25 +115,5 @@ fun QuranSettingsSection(vm: QuranSettingsViewModel = hiltViewModel()) {
         )
     }
 
-    if (picking) AlertDialog(
-        onDismissRequest = { picking = false },
-        title = { Text(stringResource(R.string.quran_translation)) },
-        text = {
-            Column {
-                TranslationEdition.entries.forEach { e ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .selectable(selected = e == ui.edition, role = Role.RadioButton) { vm.setEdition(e); picking = false }
-                            .padding(vertical = Spacing.sm),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(selected = e == ui.edition, onClick = null)
-                        Text(e.translator, modifier = Modifier.padding(start = Spacing.md))
-                    }
-                }
-            }
-        },
-        confirmButton = { TextButton(onClick = { picking = false }) { Text(stringResource(R.string.action_close)) } },
-    )
+    if (picking) TranslationPickerSheet(ui.edition, onPick = vm::setEdition, onDismiss = { picking = false })
 }

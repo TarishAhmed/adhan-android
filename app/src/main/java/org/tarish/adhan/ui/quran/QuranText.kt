@@ -4,6 +4,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.withStyle
@@ -13,17 +14,20 @@ private val FOOTNOTE_REF = Regex("""\[([^\]\s]{1,4})]""")
 private val MARK = Regex("""<mark>(.*?)</mark>""", RegexOption.DOT_MATCHES_ALL)
 private val TAG = Regex("""<[^>]+>""")
 
-/** Turns "[✛]" / "[8A]" footnote markers into small superscripts. */
+/**
+ * Translation text for display: inline HTML (`<i>`, `<em>`, …) is rendered, and "[✛]" / "[8A]"
+ * footnote markers become small superscripts.
+ */
 fun footnoteText(text: String, color: Color): AnnotatedString = buildAnnotatedString {
     var last = 0
     for (m in FOOTNOTE_REF.findAll(text)) {
-        append(text, last, m.range.first)
+        append(AnnotatedString.fromHtml(text.substring(last, m.range.first)))
         withStyle(SpanStyle(baselineShift = BaselineShift.Superscript, fontSize = 0.7.em, color = color, fontWeight = FontWeight.W600)) {
             append(m.groupValues[1])
         }
         last = m.range.last + 1
     }
-    append(text, last, text.length)
+    append(AnnotatedString.fromHtml(text.substring(last)))
 }
 
 /** Bold + tinted background for `<mark>` matches; footnote markers and other tags are dropped. */

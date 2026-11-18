@@ -78,6 +78,7 @@ data class ReaderPrefs(
     val edition: TranslationEdition = TranslationEdition.DEFAULT,
     val arabicSp: Int = QuranSettings.DEFAULT_ARABIC,
     val translationSp: Int = QuranSettings.DEFAULT_TRANSLATION,
+    val showTranslation: Boolean = true,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -94,7 +95,8 @@ class SurahReaderViewModel @Inject constructor(
     val surah: StateFlow<Surah?> = flow { emit(repo.surahs()[surahNumber - 1]) }.state(this, null)
 
     val prefs: StateFlow<ReaderPrefs> =
-        combine(settings.edition, settings.arabicSize, settings.translationSize, ::ReaderPrefs).state(this, ReaderPrefs())
+        combine(settings.edition, settings.arabicSize, settings.translationSize, settings.showTranslation, ::ReaderPrefs)
+            .state(this, ReaderPrefs())
 
     val verses: StateFlow<List<Verse>?> = settings.edition.distinctUntilChanged()
         .flatMapLatest { repo.observeSurah(surahNumber, it) }
@@ -109,7 +111,12 @@ class SurahReaderViewModel @Inject constructor(
     private var load: Job? = null
 
     init {
-        viewModelScope.launch { settings.edition.distinctUntilChanged().collect { loadTranslation(it) } }
+        viewModelScope.launch {
+            combine(settings.edition, settings.showTranslation, ::Pair).distinctUntilChanged().collect { (edition, show) ->
+                // Arabic only: nothing to download.
+                if (show) loadTranslation(edition) else { load?.cancel(); _status.value = TranslationStatus.READY }
+            }
+        }
     }
 
     private fun loadTranslation(edition: TranslationEdition) {
@@ -128,6 +135,7 @@ class SurahReaderViewModel @Inject constructor(
     fun setBookmarked(verse: Int, on: Boolean) { viewModelScope.launch { repo.setBookmarked(VerseRef(surahNumber, verse), on) } }
 
     fun setEdition(e: TranslationEdition) { viewModelScope.launch { settings.setEdition(e) } }
+    fun setShowTranslation(v: Boolean) { viewModelScope.launch { settings.setShowTranslation(v) } }
     fun setArabicSize(sp: Int) { viewModelScope.launch { settings.setArabicSize(sp) } }
     fun setTranslationSize(sp: Int) { viewModelScope.launch { settings.setTranslationSize(sp) } }
 }

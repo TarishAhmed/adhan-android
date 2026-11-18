@@ -42,20 +42,20 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,6 +92,7 @@ import org.tarish.adhan.domain.quran.TranslationEdition
 import org.tarish.adhan.domain.quran.Verse
 import org.tarish.adhan.ui.components.AdhanCard
 import org.tarish.adhan.ui.components.LocalAppSnackbar
+import org.tarish.adhan.ui.components.SettingRow
 import org.tarish.adhan.ui.components.Skeleton
 import org.tarish.adhan.ui.components.StarBadge
 import org.tarish.adhan.ui.components.geometricPattern
@@ -134,7 +135,10 @@ fun SurahReaderScreen(onBack: () -> Unit, vm: SurahReaderViewModel = hiltViewMod
                     Column {
                         Text(surah?.name.orEmpty(), style = MaterialTheme.typography.titleLarge)
                         Text(
-                            stringResource(R.string.quran_reader_subtitle, vm.surahNumber, prefs.edition.translator),
+                            stringResource(
+                                R.string.quran_reader_subtitle, vm.surahNumber,
+                                if (prefs.showTranslation) prefs.edition.label else stringResource(R.string.quran_arabic_only),
+                            ),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -159,7 +163,9 @@ fun SurahReaderScreen(onBack: () -> Unit, vm: SurahReaderViewModel = hiltViewMod
             item(key = "header") {
                 Column(Modifier.widthIn(max = MAX_READING_WIDTH)) {
                     if (s != null) SurahHeader(s)
-                    if (status == TranslationStatus.FAILED && vs?.any { it.translation == null } == true) OfflineBanner(vm::retry)
+                    if (prefs.showTranslation && status == TranslationStatus.FAILED && vs?.any { it.translation == null } == true) {
+                        OfflineBanner(vm::retry)
+                    }
                     if (status == TranslationStatus.LOADING) LinearProgressIndicator(Modifier.fillMaxWidth().padding(horizontal = Spacing.lg))
                 }
             }
@@ -195,7 +201,9 @@ fun SurahReaderScreen(onBack: () -> Unit, vm: SurahReaderViewModel = hiltViewMod
         showJump = false
         scope.launch { list.animateScrollToItem(n) }
     }
-    if (showText) ReadingSettingsSheet(prefs, vm::setEdition, vm::setArabicSize, vm::setTranslationSize) { showText = false }
+    if (showText) {
+        ReadingSettingsSheet(prefs, vm::setEdition, vm::setShowTranslation, vm::setArabicSize, vm::setTranslationSize) { showText = false }
+    }
 }
 
 @Composable
@@ -298,12 +306,17 @@ private fun AyahCard(
             color = cs.onSurface,
             modifier = Modifier.fillMaxWidth(),
         )
-        Spacer(Modifier.height(Spacing.md))
+        if (prefs.showTranslation) Spacer(Modifier.height(Spacing.md))
         when {
+            !prefs.showTranslation -> Unit
             t != null -> {
                 Text(
                     footnoteText(t.text, cs.tertiary),
-                    style = TextStyle(fontSize = prefs.translationSp.sp, lineHeight = (prefs.translationSp * 1.5f).sp),
+                    style = TextStyle(
+                        fontSize = prefs.translationSp.sp,
+                        lineHeight = (prefs.translationSp * 1.5f).sp,
+                        textDirection = if (prefs.edition.rtl) TextDirection.Rtl else TextDirection.Content,
+                    ),
                     color = cs.onSurface,
                     textAlign = if (bismillah) TextAlign.Center else TextAlign.Start,
                     modifier = Modifier.fillMaxWidth(),
@@ -377,7 +390,7 @@ private fun VerseActionsSheet(
 
 @Composable
 private fun shareText(surah: Surah, verse: Verse, edition: TranslationEdition): String {
-    val ref = stringResource(R.string.quran_share_ref, surah.name, verse.surah, verse.number, edition.translator)
+    val ref = stringResource(R.string.quran_share_ref, surah.name, verse.surah, verse.number, edition.label)
     return listOfNotNull(verse.arabic, verse.translation?.let { plainTranslation(it.text) }, ref).joinToString("\n\n")
 }
 
@@ -419,26 +432,25 @@ private fun JumpDialog(surah: Surah, onDismiss: () -> Unit, onJump: (Int) -> Uni
 private fun ReadingSettingsSheet(
     prefs: ReaderPrefs,
     onEdition: (TranslationEdition) -> Unit,
+    onShowTranslation: (Boolean) -> Unit,
     onArabic: (Int) -> Unit,
     onTranslation: (Int) -> Unit,
     onDismiss: () -> Unit,
 ) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
+    var picking by rememberSaveable { mutableStateOf(false) }
+    // Fully expanded so the size previews aren't left under the gesture bar.
+    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.padding(horizontal = Spacing.xxl).padding(bottom = Spacing.xxl).navigationBarsPadding()) {
             Text(stringResource(R.string.quran_reading_settings), style = MaterialTheme.typography.titleLarge)
-            Spacer(Modifier.height(Spacing.lg))
-            Text(stringResource(R.string.quran_translation), style = MaterialTheme.typography.titleSmall)
-            TranslationEdition.entries.forEach { e ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .selectable(selected = e == prefs.edition, role = Role.RadioButton) { onEdition(e) }
-                        .padding(vertical = Spacing.xs),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(selected = e == prefs.edition, onClick = null)
-                    Text(e.translator, modifier = Modifier.padding(start = Spacing.md))
-                }
+            Spacer(Modifier.height(Spacing.sm))
+            // One switch and one row, however many translations exist; the list opens on demand.
+            SettingRow(
+                title = stringResource(R.string.quran_show_translation),
+                checked = prefs.showTranslation,
+                onCheckedChange = onShowTranslation,
+            )
+            if (prefs.showTranslation) {
+                TranslationRow(prefs.edition, enabled = true, onClick = { picking = true })
             }
             Spacer(Modifier.height(Spacing.lg))
             SizeSlider(stringResource(R.string.quran_arabic_size), prefs.arabicSp, QuranSettings.ARABIC_RANGE, onArabic)
@@ -448,15 +460,18 @@ private fun ReadingSettingsSheet(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.fillMaxWidth(),
             )
-            SizeSlider(stringResource(R.string.quran_translation_size), prefs.translationSp, QuranSettings.TRANSLATION_RANGE, onTranslation)
-            Text(
-                stringResource(R.string.quran_size_sample),
-                style = TextStyle(fontSize = prefs.translationSp.sp, lineHeight = (prefs.translationSp * 1.5f).sp),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth(),
-            )
+            if (prefs.showTranslation) {
+                SizeSlider(stringResource(R.string.quran_translation_size), prefs.translationSp, QuranSettings.TRANSLATION_RANGE, onTranslation)
+                Text(
+                    stringResource(R.string.quran_size_sample),
+                    style = TextStyle(fontSize = prefs.translationSp.sp, lineHeight = (prefs.translationSp * 1.5f).sp),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
         }
     }
+    if (picking) TranslationPickerSheet(prefs.edition, onPick = onEdition, onDismiss = { picking = false })
 }
 
 @Composable

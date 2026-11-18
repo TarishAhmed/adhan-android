@@ -1,6 +1,12 @@
 package org.tarish.adhan.alarm
 
 import android.annotation.SuppressLint
+import android.os.SystemClock
+import android.media.session.PlaybackState
+import android.media.session.MediaSession
+import android.media.VolumeProvider
+import android.content.IntentFilter
+import android.content.BroadcastReceiver
 import android.app.Notification
 import android.app.PendingIntent
 import android.app.Service
@@ -36,7 +42,14 @@ import org.tarish.adhan.domain.AlarmKind
 import org.tarish.adhan.domain.model.PrayerName
 import timber.log.Timber
 
-/** §10.6 — plays the adhan at alarm volume in a mediaPlayback foreground service, with a Stop action. */
+/**
+ * §10.6 — plays the adhan at alarm volume in a mediaPlayback foreground service, with a Stop action.
+ *
+ * Never plays over a phone call: if a call is active or ringing (or audio focus is refused) the
+ * notification is posted silently instead, and a call that starts mid-adhan stops it. While playing,
+ * any physical button stops it: volume keys reach a remote-volume [MediaSession], and the power
+ * button is seen as the screen turning off or on.
+ */
 @AndroidEntryPoint
 class AdhanPlaybackService : Service() {
     @Inject lateinit var sounds: SoundRepository
@@ -47,7 +60,18 @@ class AdhanPlaybackService : Service() {
     private val handler = Handler(Looper.getMainLooper())
     private val hardStop = Runnable { finishPlayback() }
 
-    private data class Playing(val id: Int, val prayer: PrayerName, val kind: AlarmKind, val prayerTime: Instant)
+    private var session: MediaSession? = null
+    private var screenReceiver: BroadcastReceiver? = null
+    private var modeListener: AudioManager.OnModeChangedListener? = null
+    private var startedAt = 0L
+
+    private data class Playing(
+        val id: Int,
+        val prayer: PrayerName,
+        val kind: AlarmKind,
+        val prayerTime: Instant,
+        val silencedForCall: Boolean = false,
+    )
 
     override fun onBind(intent: Intent?): IBinder? = null
 
@@ -101,7 +125,11 @@ class AdhanPlaybackService : Service() {
                 finishPlayback(); return
             }
         }
-        requestFocus()
+        if (inCall() || !requestFocus()) {
+            Timber.i("Adhan silenced: phone call in progress")
+            current = current?.copy(silencedForCall = true)
+            finishPlayback(); return
+        }
         val p = ExoPlayer.Builder(this).build().apply {
             setAudioAttributes(
                 AudioAttributes.Builder().setUsage(C.USAGE_ALARM).setContentType(C.AUDIO_CONTENT_TYPE_SONIFICATION).build(),
@@ -122,12 +150,79 @@ class AdhanPlaybackService : Service() {
             play()
         }
         player = p
+        startedAt = SystemClock.elapsedRealtime()
+        listenForButtons()
         handler.removeCallbacks(hardStop)
         handler.postDelayed(hardStop, HARD_STOP_MS)
     }
 
-    private fun requestFocus() {
-        val am = getSystemService(AudioManager::class.java) ?: return
+    private fun inCall(): Boolean = when (getSystemService(AudioManager::class.java)?.mode) {
+        AudioManager.MODE_IN_CALL, AudioManager.MODE_IN_COMMUNICATION, AudioManager.MODE_RINGTONE,
+        AudioManager.MODE_CALL_SCREENING -> true
+        else -> false
+    }
+
+    /** Volume keys, the power button and a call starting all stop the adhan. */
+    private fun listenForButtons() {
+        // An active session with remote volume receives every volume-key press, even at the volume
+        // limits and with the screen off; the adjustment itself is ignored.
+        session = MediaSession(this, "adhan").apply {
+            setPlaybackToRemote(object : VolumeProvider(VOLUME_CONTROL_RELATIVE, 100, 50) {
+                override fun onAdjustVolume(direction: Int) = stopFromButton("volume")
+                override fun onSetVolumeTo(volume: Int) = stopFromButton("volume")
+            })
+            setCallback(object : MediaSession.Callback() {
+                override fun onMediaButtonEvent(mediaButtonIntent: Intent): Boolean { stopFromButton("media button"); return true }
+                override fun onStop() = stopFromButton("media stop")
+                override fun onPause() = stopFromButton("media pause")
+            }, handler)
+            setPlaybackState(
+                PlaybackState.Builder()
+                    .setActions(PlaybackState.ACTION_STOP or PlaybackState.ACTION_PAUSE)
+                    .setState(PlaybackState.STATE_PLAYING, 0, 1f)
+                    .build()
+            )
+            isActive = true
+        }
+        screenReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                // Ignore the screen waking for the notification itself in the first moments.
+                if (SystemClock.elapsedRealtime() - startedAt > SCREEN_GRACE_MS) stopFromButton("power")
+            }
+        }.also {
+            ContextCompat.registerReceiver(
+                this, it,
+                IntentFilter().apply { addAction(Intent.ACTION_SCREEN_OFF); addAction(Intent.ACTION_SCREEN_ON) },
+                ContextCompat.RECEIVER_NOT_EXPORTED,
+            )
+        }
+        if (Build.VERSION.SDK_INT >= 31) {
+            modeListener = AudioManager.OnModeChangedListener { if (inCall()) stopFromButton("call") }.also {
+                getSystemService(AudioManager::class.java)?.addOnModeChangedListener(ContextCompat.getMainExecutor(this), it)
+            }
+        }
+    }
+
+    private fun stopFromButton(source: String) {
+        if (player == null) return
+        Timber.i("Adhan stopped by %s", source)
+        finishPlayback()
+    }
+
+    private fun stopListening() {
+        session?.run { isActive = false; release() }
+        session = null
+        screenReceiver?.let { runCatching { unregisterReceiver(it) } }
+        screenReceiver = null
+        if (Build.VERSION.SDK_INT >= 31) {
+            modeListener?.let { getSystemService(AudioManager::class.java)?.removeOnModeChangedListener(it) }
+        }
+        modeListener = null
+    }
+
+    /** True if focus was granted; a phone call holds focus, so this fails during calls. */
+    private fun requestFocus(): Boolean {
+        val am = getSystemService(AudioManager::class.java) ?: return true
         val req = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN_TRANSIENT)
             .setAudioAttributes(
                 android.media.AudioAttributes.Builder()
@@ -140,10 +235,11 @@ class AdhanPlaybackService : Service() {
             }, handler)
             .build()
         focusRequest = req
-        am.requestAudioFocus(req)
+        return am.requestAudioFocus(req) == AudioManager.AUDIOFOCUS_REQUEST_GRANTED
     }
 
     private fun releasePlayer() {
+        stopListening()
         handler.removeCallbacks(hardStop)
         player?.release()
         player = null
@@ -177,7 +273,8 @@ class AdhanPlaybackService : Service() {
         val (title, body) = if (p.kind == AlarmKind.TEST) {
             getString(R.string.notif_test_title, name) to getString(R.string.notif_test_body, name)
         } else {
-            getString(R.string.notif_adhan_title, name) to getString(R.string.notif_adhan_body, name)
+            getString(R.string.notif_adhan_title, name) to
+                getString(if (p.silencedForCall) R.string.notif_adhan_silenced_call else R.string.notif_adhan_body, name)
         }
         val stopPi = PendingIntent.getService(
             this, 0, Intent(this, AdhanPlaybackService::class.java).setAction(ACTION_STOP),
@@ -198,6 +295,7 @@ class AdhanPlaybackService : Service() {
             .setTimeoutAfter(3_600_000)
             .apply {
                 if (withStop) {
+                    setSubText(getString(R.string.notif_stop_hint))
                     addAction(R.drawable.ic_stop, getString(R.string.notif_action_stop), stopPi)
                     setDeleteIntent(stopPi)
                     setOngoing(false)
@@ -222,6 +320,7 @@ class AdhanPlaybackService : Service() {
         private const val EXTRA_ID = "id"
         private const val NOTIFICATION_ID_FALLBACK = 42
         private const val HARD_STOP_MS = 10 * 60_000L
+        private const val SCREEN_GRACE_MS = 1_500L
 
         fun intent(context: Context, prayer: PrayerName, kind: AlarmKind, prayerTime: Instant, soundId: String, id: Int) =
             Intent(context, AdhanPlaybackService::class.java)

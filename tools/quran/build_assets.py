@@ -6,13 +6,19 @@ Writes app/src/main/assets/quran/quran.json:
 
 The Arabic is the Indo-Pak text of alislam.org's Quran reader (api.readquran.app, font 1), in
 Ahmadiyya numbering: the Bismillah is verse 1 of every surah except At-Tawbah, so verses[0] is
-always verse 1. Each verse keeps its own end ornament as alislam prints it, e.g. ﴿۵﴾ or ﴿٪۷﴾
-(٪ marks a rukūʿ). Surah names come from quran.com.
+always verse 1. Each verse keeps its own end ornament as alislam prints it, e.g. ﴿۵﴾, or ﴿ࣖ۷﴾
+where the small high ain marks a rukūʿ. Surah names come from quran.com.
 
 quran.com's Indo-Pak text is not used: it encodes some marks as Private Use Area characters
 that only render in quran.com's own font, so they show as stray CJK glyphs elsewhere.
 
-Usage: python3 tools/quran/build_assets.py   (~680 requests, about 5 minutes)
+alislam's text also uses a few legacy code points that its own font (ManzoorNaskh) turns into the
+proper Quranic annotation marks through its `ccmp` substitutions, e.g. U+066A ARABIC PERCENT SIGN
+for the rukūʿ mark U+08D6 SMALL HIGH AIN. LEGACY_MARKS applies the same mapping to the text so it
+renders correctly in any Quran font (in Scheherazade New, `٪` would otherwise show as a percent sign).
+
+Usage: python3 tools/quran/build_assets.py                (~680 requests, about 5 minutes)
+       python3 tools/quran/build_assets.py --renormalize  (re-apply LEGACY_MARKS to the existing file)
 """
 import json
 import pathlib
@@ -42,6 +48,32 @@ def get_json(url, body=None):
             time.sleep(5 * (attempt + 1))
 
 
+# From ManzoorNaskh-alislam's GSUB lookup 4 (ccmp): legacy code point -> Unicode Quranic mark.
+LEGACY_MARKS = str.maketrans({
+    "\u066A": "\u08D6",  # ARABIC PERCENT SIGN -> SMALL HIGH AIN (rukūʿ)
+    "\u066D": "\u08D7",  # FIVE POINTED STAR -> SMALL HIGH QAF
+    "\u0603": "\u08E1",  # SIGN SAFHA -> SMALL HIGH SIGN SAFHA
+    "\u06EC": "\u08E2",  # ROUNDED HIGH STOP WITH FILLED CENTRE -> DISPUTED END OF AYAH
+    "\u06DF": "\u08DE",  # SMALL HIGH ROUNDED ZERO -> SMALL HIGH WORD QIF
+    "\u065D": "\u08DF",  # REVERSED DAMMA -> SMALL HIGH WORD WAQFA
+})
+
+
+def normalize(text):
+    out = text.translate(LEGACY_MARKS)
+    left = {f"U+{ord(c):04X}" for c in out if ord(c) in (0x066A, 0x066D, 0x0603, 0x06EC, 0x06DF, 0x065D)}
+    assert not left, left
+    return out
+
+
+def renormalize():
+    data = json.loads(OUT.read_text())
+    for s in data["surahs"]:
+        s["verses"] = [normalize(v) for v in s["verses"]]
+    OUT.write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")))
+    print(f"renormalized {OUT}")
+
+
 def standard(ch):
     """Arabic blocks, Arabic presentation forms (the ﴿﴾ ornaments), and Unicode spaces and
     format characters (e.g. U+202F narrow no-break space). Private-use characters are rejected."""
@@ -64,7 +96,7 @@ def main():
         rows.sort(key=lambda r: r["v"])
         if [r["v"] for r in rows] != list(range(1, count + 1)):
             sys.exit(f"surah {n}: expected verses 1..{count}, got {len(rows)}")
-        verses = [r["ar"].strip() for r in rows]
+        verses = [normalize(r["ar"].strip()) for r in rows]
         for i, t in enumerate(verses, 1):
             odd = {f"U+{ord(ch):04X}" for ch in t if not standard(ch)}
             if odd:
@@ -87,4 +119,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    renormalize() if "--renormalize" in sys.argv else main()

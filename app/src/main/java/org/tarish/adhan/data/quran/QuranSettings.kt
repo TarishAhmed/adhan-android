@@ -2,6 +2,7 @@ package org.tarish.adhan.data.quran
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
@@ -22,6 +23,10 @@ class QuranSettings @Inject constructor(private val ds: DataStore<Preferences>) 
     val edition: Flow<TranslationEdition> = pref { TranslationEdition.fromKey(it[EDITION]) }
     suspend fun setEdition(e: TranslationEdition) { ds.edit { it[EDITION] = e.key } }
 
+    /** Off: the reader shows the Arabic only and fetches no translation. */
+    val showTranslation: Flow<Boolean> = pref { it[SHOW_TRANSLATION] ?: true }
+    suspend fun setShowTranslation(v: Boolean) { ds.edit { it[SHOW_TRANSLATION] = v } }
+
     val lastRead: Flow<VerseRef?> = pref { p ->
         val s = p[LAST_SURAH] ?: return@pref null
         VerseRef(s, p[LAST_VERSE] ?: 1)
@@ -36,6 +41,7 @@ class QuranSettings @Inject constructor(private val ds: DataStore<Preferences>) 
 
     companion object {
         private val EDITION = stringPreferencesKey("quran_edition")
+        private val SHOW_TRANSLATION = booleanPreferencesKey("quran_show_translation")
         private val LAST_SURAH = intPreferencesKey("quran_last_surah")
         private val LAST_VERSE = intPreferencesKey("quran_last_verse")
         private val ARABIC_SIZE = intPreferencesKey("quran_arabic_sp")
