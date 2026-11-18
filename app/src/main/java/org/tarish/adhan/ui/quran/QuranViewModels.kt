@@ -13,15 +13,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import org.tarish.adhan.audio.QuranPlayback
+import org.tarish.adhan.audio.QuranPlayer
+import org.tarish.adhan.data.quran.QuranPrefs
 import org.tarish.adhan.data.quran.QuranRepository
 import org.tarish.adhan.data.quran.QuranSettings
 import org.tarish.adhan.domain.quran.AhmadiNumbering
+import org.tarish.adhan.domain.quran.Reciter
+import org.tarish.adhan.domain.quran.TranslationAudio
 import org.tarish.adhan.domain.quran.SearchHit
 import org.tarish.adhan.domain.quran.Surah
 import org.tarish.adhan.domain.quran.TranslationEdition
@@ -74,37 +80,32 @@ class QuranHomeViewModel @Inject constructor(
 
 enum class TranslationStatus { LOADING, READY, FAILED }
 
-data class ReaderPrefs(
-    val edition: TranslationEdition = TranslationEdition.DEFAULT,
-    val arabicSp: Int = QuranSettings.DEFAULT_ARABIC,
-    val translationSp: Int = QuranSettings.DEFAULT_TRANSLATION,
-    val showTranslation: Boolean = true,
-)
-
 @OptIn(ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class SurahReaderViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val repo: QuranRepository,
     private val settings: QuranSettings,
-) : ViewModel() {
+    private val player: QuranPlayer,
+) : ViewModel(), QuranOptionActions {
     private val route = savedState.toRoute<SurahReader>()
     val surahNumber = route.surah
     val initialVerse = route.verse
 
     val surah: StateFlow<Surah?> = flow { emit(repo.surahs()[surahNumber - 1]) }.state(this, null)
 
-    val prefs: StateFlow<ReaderPrefs> =
-        combine(settings.edition, settings.arabicSize, settings.translationSize, settings.showTranslation, ::ReaderPrefs)
-            .state(this, ReaderPrefs())
+    val prefs: StateFlow<QuranPrefs> = settings.prefs.state(this, QuranPrefs())
 
-    val verses: StateFlow<List<Verse>?> = settings.edition.distinctUntilChanged()
-        .flatMapLatest { repo.observeSurah(surahNumber, it) }
+    val verses: StateFlow<List<Verse>?> = settings.prefs.map { it.edition to it.showsTransliteration }.distinctUntilChanged()
+        .flatMapLatest { (edition, latin) -> repo.observeSurah(surahNumber, edition, latin) }
         .state(this, null)
 
     val bookmarked: StateFlow<Set<Int>> = repo.bookmarks
         .map { list -> list.filter { it.surah == surahNumber }.map { it.verse }.toSet() }
         .state(this, emptySet())
+
+    /** Audio for this surah; null when nothing, or another surah, is playing. */
+    val playback: StateFlow<QuranPlayback?> = player.state.map { p -> p?.takeIf { it.surah == surahNumber } }.state(this, null)
 
     private val _status = MutableStateFlow(TranslationStatus.LOADING)
     val status = _status.asStateFlow()
@@ -112,9 +113,15 @@ class SurahReaderViewModel @Inject constructor(
 
     init {
         viewModelScope.launch {
-            combine(settings.edition, settings.showTranslation, ::Pair).distinctUntilChanged().collect { (edition, show) ->
+            settings.prefs.map { it.edition to it.showsTranslation }.distinctUntilChanged().collect { (edition, show) ->
                 // Arabic only: nothing to download.
                 if (show) loadTranslation(edition) else { load?.cancel(); _status.value = TranslationStatus.READY }
+            }
+        }
+        // A different reciter, spoken translation or repeat count takes effect from the current verse.
+        viewModelScope.launch {
+            settings.prefs.map { Triple(it.reciter, it.playedTranslationAudio, it.repeat) }.distinctUntilChanged().drop(1).collect {
+                playback.value?.takeIf { it.playing }?.let { play(it.verse) }
             }
         }
     }
@@ -134,10 +141,39 @@ class SurahReaderViewModel @Inject constructor(
 
     fun setBookmarked(verse: Int, on: Boolean) { viewModelScope.launch { repo.setBookmarked(VerseRef(surahNumber, verse), on) } }
 
-    fun setEdition(e: TranslationEdition) { viewModelScope.launch { settings.setEdition(e) } }
-    fun setShowTranslation(v: Boolean) { viewModelScope.launch { settings.setShowTranslation(v) } }
-    fun setArabicSize(sp: Int) { viewModelScope.launch { settings.setArabicSize(sp) } }
-    fun setTranslationSize(sp: Int) { viewModelScope.launch { settings.setTranslationSize(sp) } }
+    /** Plays from [verse] to the end of the surah. */
+    fun play(verse: Int) {
+        viewModelScope.launch {
+            val s = repo.surahs()[surahNumber - 1]
+            player.play(s, verse.coerceIn(1, s.verseCount), settings.prefs.first())
+        }
+    }
+
+    fun togglePlayback() = player.toggle()
+    fun stopPlayback() = player.stop()
+
+    /** Moves playback by [delta] verses, staying within the surah. */
+    fun skip(delta: Int) {
+        val now = playback.value ?: return
+        val target = now.verse + delta
+        if (target in 1..(surah.value?.verseCount ?: return)) play(target)
+    }
+
+    fun cycleRepeat() {
+        val next = prefs.value.repeat % QuranSettings.REPEAT_RANGE.last + 1
+        set { setRepeat(next) }
+    }
+
+    private fun set(block: suspend QuranSettings.() -> Unit) { viewModelScope.launch { settings.block() } }
+    override fun setNazira(v: Boolean) = set { setNazira(v) }
+    override fun setShowTranslation(v: Boolean) = set { setShowTranslation(v) }
+    override fun setEdition(e: TranslationEdition) = set { setEdition(e) }
+    override fun setTransliteration(v: Boolean) = set { setTransliteration(v) }
+    override fun setAudio(v: Boolean) { if (!v) player.stop(); set { setAudio(v) } }
+    override fun setReciter(r: Reciter) = set { setReciter(r) }
+    override fun setTranslationAudio(t: TranslationAudio) = set { setTranslationAudio(t) }
+    fun setArabicSize(sp: Int) = set { setArabicSize(sp) }
+    fun setTranslationSize(sp: Int) = set { setTranslationSize(sp) }
 }
 
 // ---- Search ----

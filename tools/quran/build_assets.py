@@ -17,8 +17,13 @@ proper Quranic annotation marks through its `ccmp` substitutions, e.g. U+066A AR
 for the rukūʿ mark U+08D6 SMALL HIGH AIN. LEGACY_MARKS applies the same mapping to the text so it
 renders correctly in any Quran font (in Scheherazade New, `٪` would otherwise show as a percent sign).
 
+Also writes app/src/main/assets/quran/translit.json ({"source", "surahs": [[verse 1, ...], ...]}),
+an English transliteration in the same Ahmadi numbering, joined from quran.com's word-by-word
+transliteration (its verse-level one runs words together). The Bismillah verse reuses 1:1.
+
 Usage: python3 tools/quran/build_assets.py                (~680 requests, about 5 minutes)
        python3 tools/quran/build_assets.py --renormalize  (re-apply LEGACY_MARKS to the existing file)
+       python3 tools/quran/build_assets.py --translit     (transliteration only, ~140 requests)
 """
 import json
 import pathlib
@@ -30,6 +35,8 @@ import urllib.request
 READQURAN = "https://api.readquran.app/chapter/{n}:{start}-{end}"
 CHAPTERS = "https://api.quran.com/api/v4/chapters?language=en"
 OUT = pathlib.Path(__file__).resolve().parents[2] / "app/src/main/assets/quran/quran.json"
+TRANSLIT_OUT = OUT.with_name("translit.json")
+WORDS = "https://api.quran.com/api/v4/verses/by_chapter/{n}?words=true&word_fields=char_type_name&per_page=50&page={page}"
 PAGE = 10  # the API returns at most 10 verses per request
 DELAY = 0.3  # seconds between requests, to be gentle on alislam.org
 
@@ -118,5 +125,34 @@ def main():
     print(f"wrote {OUT} ({OUT.stat().st_size // 1024} KB, {total} verses)")
 
 
+def translit():
+    surahs = []
+    for n in range(1, 115):
+        verses, page = [], 1
+        while page:
+            d = get_json(WORDS.format(n=n, page=page))
+            for v in d["verses"]:
+                words = [w["transliteration"]["text"] for w in v["words"]
+                         if w["char_type_name"] == "word" and w["transliteration"]["text"]]
+                verses.append(" ".join(words))
+            page = d["pagination"]["next_page"]
+            time.sleep(DELAY)
+        surahs.append(verses)
+        print(f"{n:3} {len(verses)} verses", flush=True)
+    bismillah = surahs[0][0]
+    surahs = [s if n in (1, 9) else [bismillah] + s for n, s in enumerate(surahs, 1)]
+    arabic = json.loads(OUT.read_text())["surahs"]
+    for n, (t, a) in enumerate(zip(surahs, arabic), 1):
+        assert len(t) == len(a["verses"]), (n, len(t), len(a["verses"]))
+    TRANSLIT_OUT.write_text(json.dumps({"source": "quran.com word-by-word transliteration", "surahs": surahs},
+                                       ensure_ascii=False, separators=(",", ":")))
+    print(f"wrote {TRANSLIT_OUT} ({TRANSLIT_OUT.stat().st_size // 1024} KB)")
+
+
 if __name__ == "__main__":
-    renormalize() if "--renormalize" in sys.argv else main()
+    if "--renormalize" in sys.argv:
+        renormalize()
+    elif "--translit" in sys.argv:
+        translit()
+    else:
+        main()

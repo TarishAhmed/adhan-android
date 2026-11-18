@@ -77,6 +77,17 @@
             android:exported="false"
             android:foregroundServiceType="mediaPlayback" />
 
+        <!-- Quran recitation; exported so Bluetooth, Android Auto and the lock screen can control it. -->
+        <service
+            android:name=".audio.QuranPlaybackService"
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="androidx.media3.session.MediaSessionService" />
+            </intent-filter>
+        </service>
+
         <!-- Keep the legacy class name so existing home-screen widgets survive the update -->
         <receiver android:name=".AdhanHomeWidget" android:exported="true">
             <intent-filter>

@@ -2,4 +2,7 @@
 <resources>
     <color name="brand_primary">#1B6B51</color>
     <color name="splash_background">#F5FBF5</color>
+    <!-- Launch screen: the khatam logo in ivory on the brand emerald. -->
+    <color name="splash_screen">#1B6B51</color>
+    <color name="splash_icon">#FBF8F1</color>
 </resources>

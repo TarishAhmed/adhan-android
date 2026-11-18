@@ -33,7 +33,7 @@ import javax.inject.Singleton
 interface QuranRepository {
     suspend fun surahs(): List<Surah>
     /** Arabic is always present; each verse's translation fills in as it is cached. */
-    fun observeSurah(surah: Int, edition: TranslationEdition): Flow<List<Verse>>
+    fun observeSurah(surah: Int, edition: TranslationEdition, transliteration: Boolean = false): Flow<List<Verse>>
     /** Downloads any uncached verses of [surah], a page at a time, so the reader fills progressively. */
     suspend fun ensureTranslation(surah: Int, edition: TranslationEdition): Result<Unit>
     /** Number of surahs whose translation is fully cached. */
@@ -65,10 +65,13 @@ class QuranRepositoryImpl @Inject constructor(
 
     override suspend fun surahs(): List<Surah> = assets.surahs()
 
-    override fun observeSurah(surah: Int, edition: TranslationEdition): Flow<List<Verse>> =
-        combine(flow { emit(assets.arabic(surah)) }, dao.translations(edition.key, surah)) { arabic, rows ->
+    override fun observeSurah(surah: Int, edition: TranslationEdition, transliteration: Boolean): Flow<List<Verse>> =
+        combine(
+            flow { emit(assets.arabic(surah) to if (transliteration) assets.transliteration(surah) else null) },
+            dao.translations(edition.key, surah),
+        ) { (arabic, latin), rows ->
             val byVerse = rows.associateBy { it.verse }
-            arabic.mapIndexed { i, ar -> Verse(surah, i + 1, ar, byVerse[i + 1]?.toDomain()) }
+            arabic.mapIndexed { i, ar -> Verse(surah, i + 1, ar, byVerse[i + 1]?.toDomain(), latin?.getOrNull(i)) }
         }
 
     override suspend fun ensureTranslation(surah: Int, edition: TranslationEdition): Result<Unit> = withContext(io) {

@@ -12,7 +12,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,21 +39,6 @@ import org.tarish.adhan.R
 import org.tarish.adhan.domain.quran.TranslationEdition
 import org.tarish.adhan.ui.theme.Radius
 import org.tarish.adhan.ui.theme.Spacing
-
-/**
- * One compact row showing the current translation; tapping opens [TranslationPickerSheet]. Keeps
- * the reading-settings sheet the same size however many translations exist.
- */
-@Composable
-fun TranslationRow(edition: TranslationEdition, enabled: Boolean, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    ListItem(
-        headlineContent = { Text(stringResource(R.string.quran_translation)) },
-        supportingContent = { Text(edition.label) },
-        trailingContent = { Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null) },
-        colors = ListItemDefaults.colors(containerColor = Color.Transparent),
-        modifier = modifier.selectable(selected = false, enabled = enabled, role = Role.Button, onClick = onClick),
-    )
-}
 
 /** Searchable list of all editions, grouped by language with sticky headers. */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)

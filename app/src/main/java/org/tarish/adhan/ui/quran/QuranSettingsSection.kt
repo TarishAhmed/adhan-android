@@ -3,18 +3,13 @@ package org.tarish.adhan.ui.quran
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.MenuBook
 import androidx.compose.material.icons.outlined.CloudDownload
-import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -35,7 +30,11 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.tarish.adhan.R
 import org.tarish.adhan.data.quran.QuranRepository
+import org.tarish.adhan.data.quran.QuranPrefs
 import org.tarish.adhan.data.quran.QuranSettings
+import org.tarish.adhan.audio.QuranPlayer
+import org.tarish.adhan.domain.quran.Reciter
+import org.tarish.adhan.domain.quran.TranslationAudio
 import org.tarish.adhan.domain.quran.TranslationEdition
 import org.tarish.adhan.ui.components.SectionHeader
 import org.tarish.adhan.ui.components.SettingRow
@@ -45,8 +44,7 @@ import javax.inject.Inject
 
 /** [running] carries "done of total" while the offline download is in progress. */
 data class QuranSettingsUi(
-    val showTranslation: Boolean = true,
-    val edition: TranslationEdition = TranslationEdition.DEFAULT,
+    val prefs: QuranPrefs = QuranPrefs(),
     val downloaded: Int = 0,
     val running: Pair<Int, Int>? = null,
 )
@@ -57,20 +55,27 @@ class QuranSettingsViewModel @Inject constructor(
     @ApplicationContext context: android.content.Context,
     private val settings: QuranSettings,
     private val workScheduler: WorkScheduler,
+    private val player: QuranPlayer,
     repo: QuranRepository,
-) : ViewModel() {
+) : ViewModel(), QuranOptionActions {
     private val work = WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(WorkScheduler.QURAN_DOWNLOAD).map { infos ->
         infos.firstOrNull { it.state == WorkInfo.State.RUNNING || it.state == WorkInfo.State.ENQUEUED }?.let {
             it.progress.getInt(QuranDownloadWorker.KEY_DONE, 0) to it.progress.getInt(QuranDownloadWorker.KEY_TOTAL, SURAH_COUNT)
         }
     }
 
-    val ui = combine(settings.showTranslation, settings.edition, settings.edition.flatMapLatest(repo::completeSurahs), work, ::QuranSettingsUi)
+    val ui = combine(settings.prefs, settings.edition.flatMapLatest(repo::completeSurahs), work, ::QuranSettingsUi)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), QuranSettingsUi())
 
-    fun setEdition(e: TranslationEdition) { viewModelScope.launch { settings.setEdition(e) } }
-    fun setShowTranslation(v: Boolean) { viewModelScope.launch { settings.setShowTranslation(v) } }
-    fun download() { workScheduler.downloadQuran(ui.value.edition) }
+    private fun set(block: suspend QuranSettings.() -> Unit) { viewModelScope.launch { settings.block() } }
+    override fun setNazira(v: Boolean) = set { setNazira(v) }
+    override fun setShowTranslation(v: Boolean) = set { setShowTranslation(v) }
+    override fun setEdition(e: TranslationEdition) = set { setEdition(e) }
+    override fun setTransliteration(v: Boolean) = set { setTransliteration(v) }
+    override fun setAudio(v: Boolean) { if (!v) player.stop(); set { setAudio(v) } }
+    override fun setReciter(r: Reciter) = set { setReciter(r) }
+    override fun setTranslationAudio(t: TranslationAudio) = set { setTranslationAudio(t) }
+    fun download() { workScheduler.downloadQuran(ui.value.prefs.edition) }
 
     companion object { const val SURAH_COUNT = 114 }
 }
@@ -78,25 +83,12 @@ class QuranSettingsViewModel @Inject constructor(
 @Composable
 fun QuranSettingsSection(vm: QuranSettingsViewModel = hiltViewModel()) {
     val ui by vm.ui.collectAsStateWithLifecycle()
-    var picking by rememberSaveable { mutableStateOf(false) }
     val complete = ui.downloaded >= QuranSettingsViewModel.SURAH_COUNT
 
     Column {
         SectionHeader(stringResource(R.string.quran_title))
-        SettingRow(
-            title = stringResource(R.string.quran_show_translation),
-            icon = Icons.AutoMirrored.Outlined.MenuBook,
-            subtitle = if (ui.showTranslation) ui.edition.label else stringResource(R.string.quran_arabic_only),
-            checked = ui.showTranslation,
-            onCheckedChange = vm::setShowTranslation,
-        )
-        if (!ui.showTranslation) return@Column
-        SettingRow(
-            title = stringResource(R.string.quran_translation),
-            icon = Icons.Outlined.Translate,
-            subtitle = ui.edition.label,
-            onClick = { picking = true },
-        )
+        QuranOptions(ui.prefs, vm)
+        if (!ui.prefs.showsTranslation) return@Column
         val running = ui.running
         SettingRow(
             title = stringResource(R.string.quran_offline),
@@ -114,6 +106,4 @@ fun QuranSettingsSection(vm: QuranSettingsViewModel = hiltViewModel()) {
             },
         )
     }
-
-    if (picking) TranslationPickerSheet(ui.edition, onPick = vm::setEdition, onDismiss = { picking = false })
 }

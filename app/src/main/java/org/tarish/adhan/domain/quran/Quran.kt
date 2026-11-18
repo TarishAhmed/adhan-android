@@ -44,12 +44,58 @@ enum class TranslationEdition(val key: String, val language: String, val transla
     }
 }
 
+/**
+ * Verse-by-verse recitations on alislam.org's Quran reader, in our recommended order: Alafasy (alislam's
+ * own default, the most widely acclaimed), then the Jamaat's Qari Muhammad Ashiq and Maulana Feroz Alam
+ * in the Indo-Pak style the Mushaf text follows, then Aiman Almaliki and Idir Iken. [dir] is the
+ * folder under [QuranAudio.BASE_URL] and doubles as the stored key.
+ */
+enum class Reciter(val dir: String, val displayName: String) {
+    ALAFASY("rashid", "Mishary Rashid Alafasy"),
+    ASHIQ("ashiq", "Qari Muhammad Ashiq"),
+    FEROZ_ALAM("feroz", "Maulana Feroz Alam"),
+    ALMALIKI("aiman", "Aiman Almaliki"),
+    IKEN("idir-iken", "Idir Iken");
+
+    companion object {
+        val DEFAULT = ALAFASY
+        fun fromKey(k: String?) = entries.firstOrNull { it.dir == k } ?: DEFAULT
+    }
+}
+
+/** Spoken translation or commentary played after each verse's recitation; [OFF] by default. */
+enum class TranslationAudio(val key: String, val dir: String?, val suffix: String?, val language: String, val displayName: String) {
+    OFF("off", null, null, "", ""),
+    SHORT_COMMENTARY("sc", "short-commentary-verse-by-verse", "EN", "English", "Short Commentary · Mansoor Clarke"),
+    URDU("ur", "urdu-translation-naseer-qamar-verse-by-verse", "UR", "Urdu", "Urdu translation · Naseer Qamar");
+
+    companion object { fun fromKey(k: String?) = entries.firstOrNull { it.key == k } ?: OFF }
+}
+
+/** File names on alislam's audio server, which uses Ahmadiyya numbering like the rest of the app. */
+object QuranAudio {
+    const val BASE_URL = "https://files.alislam.cloud/audio/tilawat/"
+
+    private fun name(surah: Int, verse: Int) = "%03d-%03d".format(surah, verse)
+
+    fun recitation(r: Reciter, surah: Int, verse: Int) = "$BASE_URL${r.dir}/${name(surah, verse)}-AR.mp3"
+
+    fun translation(t: TranslationAudio, surah: Int, verse: Int): String? =
+        t.dir?.let { "$BASE_URL$it/${name(surah, verse)}-${t.suffix}.mp3" }
+}
+
 /** [text] may contain `[ref]` markers that point at [notes]; note bodies may contain HTML. */
 data class Translation(val text: String, val notes: List<Footnote> = emptyList())
 
 data class Footnote(val ref: String, val body: String)
 
-data class Verse(val surah: Int, val number: Int, val arabic: String, val translation: Translation?)
+data class Verse(
+    val surah: Int,
+    val number: Int,
+    val arabic: String,
+    val translation: Translation?,
+    val transliteration: String? = null,
+)
 
 data class VerseRef(val surah: Int, val verse: Int)
 
@@ -60,6 +106,23 @@ interface TranslationSource {
     /** Verses [from]..[to] of [surah], keyed by verse number. */
     suspend fun verses(edition: TranslationEdition, surah: Int, from: Int, to: Int): Map<Int, Translation>
     suspend fun search(edition: TranslationEdition, query: String): List<SearchHit>
+}
+
+/** Rukūʿ (sections) as the Indo-Pak text marks them: a verse whose end ornament holds ࣖ closes one. */
+object Ruku {
+    const val MARK = '\u08D6'
+
+    /** [verses] in order, split after each verse that ends a rukūʿ; a trailing unmarked run is kept. */
+    fun group(verses: List<Verse>): List<List<Verse>> {
+        val out = mutableListOf<List<Verse>>()
+        var current = mutableListOf<Verse>()
+        for (v in verses) {
+            current += v
+            if (MARK in v.arabic) { out += current; current = mutableListOf() }
+        }
+        if (current.isNotEmpty()) out += current
+        return out
+    }
 }
 
 object AhmadiNumbering {

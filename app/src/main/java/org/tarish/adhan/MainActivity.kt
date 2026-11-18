@@ -23,6 +23,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         // Keep the splash until onboarding state and theme are read — no flash of Home (§8.1).
         splash.setKeepOnScreenCondition { rootVm.startOnboarding.value == null || rootVm.themeMode.value == null }
+        // The logo grows a little and fades into the app rather than cutting away.
+        splash.setOnExitAnimationListener { p ->
+            p.iconView.animate().scaleX(1.2f).scaleY(1.2f).setDuration(SPLASH_EXIT_MS).start()
+            p.view.animate().alpha(0f).setDuration(SPLASH_EXIT_MS).withEndAction { p.remove() }.start()
+        }
         enableEdgeToEdge()
         setContent { AdhanRoot(rootVm, deepLinks.receiveAsFlow()) }
     }
@@ -32,3 +37,5 @@ class MainActivity : ComponentActivity() {
         if (intent.data?.scheme == "adhan") deepLinks.trySend(Unit)
     }
 }
+
+private const val SPLASH_EXIT_MS = 300L
