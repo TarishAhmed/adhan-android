@@ -55,7 +55,7 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
 
       # Must be the key that signed the installed builds, or Android refuses the update.
       - name: Set up signing
